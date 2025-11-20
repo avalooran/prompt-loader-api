@@ -6,13 +6,8 @@ from prompt_loader import PromptLoader
 
 app = FastAPI(title="Custom Promptz API", version="1.0.0")
 
-# Initialize prompt loader
-
-#Working
-#PROMPTS_DIR = os.path.join(os.path.dirname(__file__), "..", "prompt-library", "prompts")
-#Working for outside the above folder too.
-#PROMPTS_DIR = "C:\\Users\\User1\\projects\\mcp_server\\promptz-dev\\prompt-library\\prompts"
-prompt_loader = PromptLoader("C:\\Users\\User1\\Project\\DEMO\\mcp\\prompt-library\\prompts")
+# Initialize prompt loader with GitHub repo
+prompt_loader = PromptLoader("avalooran/prompt-library/welog")  # Replace with actual GitHub repo
 
 @app.get("/")
 def read_root():

@@ -1,20 +1,20 @@
 import os
 import re
+import requests
 from typing import List, Dict, Optional
 from models import Prompt
 
 class PromptLoader:
-    def __init__(self, prompts_dir: str):
-        self.prompts_dir = prompts_dir
+    def __init__(self, github_repo: str, github_token: Optional[str] = None):
+        self.github_repo = github_repo  # format: "owner/repo" or "owner/repo/path/to/prompts"
+        self.github_token = github_token
         self._prompts_cache = None
+        self.base_url = "https://api.github.com/repos"
     
-    def _parse_markdown_file(self, file_path: str) -> Optional[Prompt]:
+    def _parse_markdown_content(self, filename: str, content: str) -> Optional[Prompt]:
         try:
-            with open(file_path, 'r', encoding='utf-8') as f:
-                content = f.read()
-            
             # Use filename without extension as name
-            name = os.path.splitext(os.path.basename(file_path))[0]
+            name = os.path.splitext(filename)[0]
             
             # Extract description (first paragraph after title)
             lines = content.split('\n')
@@ -48,18 +48,41 @@ class PromptLoader:
                 author="Custom"
             )
         except Exception as e:
-            print(f"Error parsing {file_path}: {e}")
+            print(f"Error parsing {filename}: {e}")
             return None
+    
+    def _get_github_files(self) -> List[Dict]:
+        parts = self.github_repo.split('/')
+        if len(parts) < 2:
+            raise ValueError("Invalid GitHub repo format. Use 'owner/repo' or 'owner/repo/path'")
+        
+        owner, repo = parts[0], parts[1]
+        path = '/'.join(parts[2:]) if len(parts) > 2 else ''
+        
+        url = f"{self.base_url}/{owner}/{repo}/contents/{path}"
+        headers = {}
+        if self.github_token:
+            headers['Authorization'] = f'token {self.github_token}'
+        
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response.json()
     
     def load_prompts(self) -> List[Prompt]:
         if self._prompts_cache is not None:
             return self._prompts_cache
         
         prompts = []
-        for filename in os.listdir(self.prompts_dir):
-            if filename.endswith('.md'):
-                file_path = os.path.join(self.prompts_dir, filename)
-                prompt = self._parse_markdown_file(file_path)
+        files = self._get_github_files()
+        
+        for file_info in files:
+            if file_info['name'].endswith('.md') and file_info['type'] == 'file':
+                # Get file content
+                content_response = requests.get(file_info['download_url'])
+                content_response.raise_for_status()
+                content = content_response.text
+                
+                prompt = self._parse_markdown_content(file_info['name'], content)
                 if prompt:
                     prompts.append(prompt)
         
