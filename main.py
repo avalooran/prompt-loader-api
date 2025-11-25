@@ -7,7 +7,7 @@ from prompt_loader import PromptLoader
 app = FastAPI(title="Custom Promptz API", version="1.0.0")
 
 # Initialize prompt loader with GitHub repo
-prompt_loader = PromptLoader("avalooran/prompt-library/welog")  # Replace with actual GitHub repo
+prompt_loader = PromptLoader("avalooran/prompt-library/prompts")  # Replace with actual GitHub repo
 
 @app.get("/")
 def read_root():
