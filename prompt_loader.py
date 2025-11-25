@@ -5,6 +5,8 @@ from typing import List, Dict, Optional
 from models import Prompt
 
 class PromptLoader:
+    branch = "prompt_poc"
+    
     def __init__(self, github_repo: str, github_token: Optional[str] = None):
         self.github_repo = github_repo  # format: "owner/repo" or "owner/repo/path/to/prompts"
         self.github_token = github_token
@@ -64,7 +66,8 @@ class PromptLoader:
         if self.github_token:
             headers['Authorization'] = f'token {self.github_token}'
         
-        response = requests.get(url, headers=headers)
+        params = {'ref': self.branch}
+        response = requests.get(url, headers=headers, params=params)
         response.raise_for_status()
         return response.json()
     
